@@ -8,8 +8,5 @@ setup(
     license='Unlicense',
     author='David Roman',
     author_email='davidroman96@gmail.com',
-    install_requires=[
-        'PyYAML',
-    ],
     description=''
 )

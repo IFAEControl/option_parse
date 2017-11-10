@@ -15,13 +15,31 @@ class _BaseArgs:
 
             if "others" in arg:
                 self._parser.add_argument(*flags, **arg["others"])
+                if "action" in arg["others"] and arg["others"]["action"] == "store_true":
+                    o_flags = []
+                    for f in flags:
+                        if f.startswith("--"):
+                            o_flags.append("--no-"+f[2:])
+                        elif f.startswith("-"):
+                            o_flags.append("-n"+f[1:])
+                    
+                    self._parser.add_argument(*o_flags, **arg["others"])
             else:
                 self._parser.add_argument(*flags)
         
         self._user_args = self._parser.parse_args()
 
     def get_value(self, *args):
-        return getattr(self._user_args, args[-1])
+        atr = getattr(self._user_args, args[-1])
+        if type(atr) == bool and atr == False:
+            try:
+                o_atr = getattr(self._user_args, "no_"+args[-1])
+                if type(o_atr) == bool and o_atr == True:
+                    return False
+            except:
+                pass
+
+        return atr
 
 
 class _BaseConfig:
