@@ -9,14 +9,19 @@ class _BaseArgs:
 
         args_list = []
         if "flag_names" in args_desc:
-            for v in args_desc["flag_names"]:
-                args_list.append(v)
+            for sub_dict in args_desc["flag_names"]:
+                l = []
+                for v in sub_dict:
+                    l.append(v)
+                args_list.append(l)
 
         if "others" in args_desc:
-            self._parser.add_argument(*args_list, **args_desc["others"])
+            for args in args_list:
+                self._parser.add_argument(*args, **args_desc["others"])
         else:
-            self._parser.add_argument(*args_list)
-
+            for args in args_list:
+                self._parser.add_argument(*args)
+        
         self._user_args = self._parser.parse_args()
     def get_value(self, *args):
         return getattr(self._user_args, args[-1])
@@ -71,7 +76,9 @@ class BaseOpt:
             if args not in self._modified_options and arg is not None:
                 return arg
         except:
-            return self._config.get_value(*args)
+            pass
+
+        return self._config.get_value(*args)
 
     def set_value(self, v, *args):
         self._config.set_value(v, *args)
