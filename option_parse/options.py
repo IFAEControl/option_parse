@@ -56,7 +56,7 @@ class _BaseConfig:
         return self._get_value(self._conf, *args)
 
 
-class BaseOpt:
+class BaseOptions:
     def __init__(self, config_file, args_desc):
         self._config = _BaseConfig(config_file)
         self._args = _BaseArgs(args_desc)

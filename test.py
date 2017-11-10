@@ -1,4 +1,4 @@
-import options
+import option_parse
 
 d = [
     {
@@ -10,7 +10,7 @@ d = [
     },
 ]
 
-o = options.BaseOpt("/tmp/test.yml", d)
+o = option_parse.BaseOptions("/tmp/test.yml", d)
 print(o.get_or_set("Default",  "test2", "test"))
 #o["test2"]["test"] = "UpdateValue"
 print(o["test2"])
