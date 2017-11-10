@@ -7,22 +7,19 @@ class _BaseArgs:
     def __init__(self, args_desc):
         self._parser = argparse.ArgumentParser()
 
-        args_list = []
-        if "flag_names" in args_desc:
-            for sub_dict in args_desc["flag_names"]:
-                l = []
-                for v in sub_dict:
-                    l.append(v)
-                args_list.append(l)
+        for arg in args_desc:
+            flags = []
+            if "flag_name" in arg:
+                for flag in arg["flag_name"]:
+                    flags.append(flag)
 
-        if "others" in args_desc:
-            for args in args_list:
-                self._parser.add_argument(*args, **args_desc["others"])
-        else:
-            for args in args_list:
-                self._parser.add_argument(*args)
+            if "others" in arg:
+                self._parser.add_argument(*flags, **arg["others"])
+            else:
+                self._parser.add_argument(*flags)
         
         self._user_args = self._parser.parse_args()
+
     def get_value(self, *args):
         return getattr(self._user_args, args[-1])
 
