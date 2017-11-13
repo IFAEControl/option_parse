@@ -5,6 +5,8 @@ import yaml
 
 class _BaseArgs:
     def __init__(self, args_desc):
+        if args_desc is None:
+            return
         self._parser = argparse.ArgumentParser()
 
         for arg in args_desc:
@@ -23,24 +25,29 @@ class _BaseArgs:
                         elif f.startswith("-"):
                             o_flags.append("-n"+f[1:])
                     
-                    self._parser.add_argument(*o_flags, action="store_true")
+                    self._parser.add_argument(*o_flags, **arg["others"])
             else:
                 self._parser.add_argument(*flags)
-        
+
         self._user_args = self._parser.parse_args()
 
     def get_value(self, *args):
+        if self._user_args is None:
+            return None
+
         atr = getattr(self._user_args, args[-1])
-        if type(atr) == bool and atr == False:
-            try:
-                o_atr = getattr(self._user_args, "no_"+args[-1])
-                if type(o_atr) == bool and o_atr == True:
-                    return False
-            except:
-                pass
-
-        return atr
-
+        if type(atr) == bool:
+            if atr is False:
+                try:
+                    o_atr = getattr(self._user_args, "no_"+args[-1])
+                    if type(o_atr) == bool and o_atr is True:
+                        return False
+                except:
+                    pass
+            elif atr is True:
+                return True
+        else:
+            return atr
 
 class _BaseConfig:
     def __init__(self, config_file=None):
@@ -101,7 +108,7 @@ class BaseOptions:
             arg = self._args.get_value(*args)
             if args not in self._modified_options and arg is not None:
                 return arg
-        except:
+        except Exception:
             pass
 
         return self.config.get_value(*args)
