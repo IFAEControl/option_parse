@@ -9,8 +9,8 @@ class _BaseArgs:
 
         for arg in args_desc:
             flags = []
-            if "flag_name" in arg:
-                for flag in arg["flag_name"]:
+            if "name" in arg:
+                for flag in arg["name"]:
                     flags.append(flag)
 
             if "others" in arg:
@@ -23,7 +23,7 @@ class _BaseArgs:
                         elif f.startswith("-"):
                             o_flags.append("-n"+f[1:])
                     
-                    self._parser.add_argument(*o_flags, **arg["others"])
+                    self._parser.add_argument(*o_flags, action="store_true")
             else:
                 self._parser.add_argument(*flags)
         
@@ -43,15 +43,26 @@ class _BaseArgs:
 
 
 class _BaseConfig:
-    def __init__(self, config_file):
+    def __init__(self, config_file=None):
+        self._config_file = None
+        self._conf = None
+
+        if config_file is not None:
+            self.load(config_file)
+
+    def load(self, config_file):
         self._config_file = config_file
         with open(config_file, "r") as f:
             self._conf = yaml.load(f.read()) or {}
 
-    def dump(self, config_file=None):
+    def set(self, config):
+        self._conf = config
+
+    def dump(self, config=None, config_file=None):
         file = config_file or self._config_file
+        conf = config or self._conf
         with open(file, "w+") as f:
-            yaml.dump(self._conf, f, default_flow_style=False)
+            yaml.dump(conf, f, default_flow_style=False)
 
     def _set_value(self, v, d, *args):
         if len(args) > 1:
@@ -76,14 +87,14 @@ class _BaseConfig:
 
 class BaseOptions:
     def __init__(self, config_file, args_desc):
-        self._config = _BaseConfig(config_file)
+        self.config = _BaseConfig(config_file)
         self._args = _BaseArgs(args_desc)
 
         # Modified options will be checked only against config values, not arguments
         self._modified_options = []
 
     def save_config(self):
-        self._config.dump()
+        self.config.dump()
 
     def get_value(self, *args):
         try:
@@ -93,10 +104,10 @@ class BaseOptions:
         except:
             pass
 
-        return self._config.get_value(*args)
+        return self.config.get_value(*args)
 
     def set_value(self, v, *args):
-        self._config.set_value(v, *args)
+        self.config.set_value(v, *args)
         self._modified_options.append(args)
 
     def get_or_set(self, v, *args):

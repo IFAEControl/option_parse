@@ -2,10 +2,10 @@ import option_parse
 
 d = [
     {
-        "flag_name": {"-t", "--test"},
+        "name": {"-t", "--test"},
     },
     {
-        "flag_name": {"-t2", "--test2"},
+        "name": {"-t2", "--test2"},
         "others": {"action": "store_true"},
     },
 ]
