@@ -4,7 +4,7 @@ import yaml
 
 
 class _BaseArgs:
-    def __init__(self, args_desc):
+    def __init__(self, args_desc: dict) -> None:
         if args_desc is None:
             return
         self._parser = argparse.ArgumentParser()
@@ -50,7 +50,7 @@ class _BaseArgs:
             return atr
 
 class _BaseConfig:
-    def __init__(self, config_file=None):
+    def __init__(self, config_file: str=None) -> None:
         self._config_file = None
         self._conf = None
 
@@ -62,7 +62,7 @@ class _BaseConfig:
         with open(config_file, "r") as f:
             self._conf = yaml.load(f.read()) or {}
 
-    def set(self, config):
+    def set(self, config) -> None:
         self._conf = config
 
     def dump(self, config=None, config_file=None):
@@ -93,14 +93,14 @@ class _BaseConfig:
 
 
 class BaseOptions:
-    def __init__(self, config_file, args_desc):
+    def __init__(self, config_file: str, args_desc: dict) -> None:
         self.config = _BaseConfig(config_file)
         self._args = _BaseArgs(args_desc)
 
         # Modified options will be checked only against config values, not arguments
-        self._modified_options = []
+        self._modified_options: list = []
 
-    def save_config(self):
+    def save_config(self) -> None:
         self.config.dump()
 
     def get_value(self, *args):
@@ -128,8 +128,8 @@ class BaseOptions:
             else:
                 return v
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
         return self.get_value(key)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value):
         self.set_value(value, key)
