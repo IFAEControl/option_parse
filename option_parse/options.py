@@ -32,6 +32,7 @@ class _BaseArgs:
         self._user_args = self._parser.parse_args()
 
     def get_value(self, *args):
+        """ Read the given command line argument if present, if not return None """
         if self._user_args is None:
             return None
 
@@ -42,12 +43,13 @@ class _BaseArgs:
                     o_atr = getattr(self._user_args, "no_"+args[-1])
                     if type(o_atr) == bool and o_atr is True:
                         return False
-                except:
+                except AttributeError:
                     pass
             elif atr is True:
                 return True
         else:
             return atr
+
 
 class _BaseConfig:
     def __init__(self, config_file: str=None) -> None:
@@ -58,11 +60,13 @@ class _BaseConfig:
             self.load(config_file)
 
     def load(self, config_file):
+        """ Load config from file"""
         self._config_file = config_file
-        with open(config_file, "r") as f:
+        with open(config_file) as f:
             self._conf = yaml.load(f.read()) or {}
 
     def set(self, config) -> None:
+        """ set the given config """
         self._conf = config
 
     def dump(self, config=None, config_file=None):
@@ -80,6 +84,7 @@ class _BaseConfig:
             d[args[0]] = v
 
     def set_value(self, v, *args):
+        """ Set a new value (v) to the given option """
         self._set_value(v, self._conf, *args)
 
     def _get_value(self, d, *args):
@@ -89,10 +94,17 @@ class _BaseConfig:
             return d[args[0]]
 
     def get_value(self, *args):
+        """ Return the requested value """
+
         return self._get_value(self._conf, *args)
 
 
 class BaseOptions:
+    """
+        Basic class to manage user options from command line arguments and configuration file prioritizing
+        command line arguments with a fallback to the configuration file.
+    """
+
     def __init__(self, config_file: str, args_desc: dict) -> None:
         self.config = _BaseConfig(config_file)
         self._args = _BaseArgs(args_desc)
@@ -101,23 +113,28 @@ class BaseOptions:
         self._modified_options: list = []
 
     def save_config(self) -> None:
+        """ Save current config """
         self.config.dump()
 
     def get_value(self, *args):
+        """ Return the requested value."""
         try:
             arg = self._args.get_value(*args)
             if args not in self._modified_options and arg is not None:
                 return arg
-        except Exception:
+        except AttributeError:
             pass
 
         return self.config.get_value(*args)
 
     def set_value(self, v, *args):
+        """ Set a new value (v) to the given option """
         self.config.set_value(v, *args)
         self._modified_options.append(args)
 
     def get_or_set(self, v, *args):
+        """ Try to read and return the given option, otherwise create it """
+
         try:
             return self.get_value(*args)
         except KeyError:
