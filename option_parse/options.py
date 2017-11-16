@@ -1,4 +1,5 @@
 import argparse
+from pydoc import locate
 
 import yaml
 
@@ -15,8 +16,17 @@ class _Value:
     def __init__(self, value):
         self._val = value
 
-    def as_(self, type):
-        return type(self._val)
+    def as_(self, t):
+        if type(t) == str:
+            if t == "unsigned":
+                return self.as_unsigned()
+            elif t == "unsigned_float":
+                return self.as_unsigned_float()
+            else:
+                t = locate(t)
+                return t(self._val)
+        else:
+            return t(self._val)
 
     def as_unsigned(self) -> _Unsigned:
         return _Unsigned(int(self._val))
@@ -89,15 +99,16 @@ class _BaseConfig:
 
     def _set_default(self, desc, conf):
         for i in desc.keys():
-            if "default" not in desc[i]:
-                if i not in conf:
-                    conf[i] = {}
-                    self._set_default(desc[i], conf[i])
-                else:
-                    self._set_default(desc[i], conf[i])
+            if type(conf) == dict:
+                if "default" not in desc[i]:
+                    if i not in conf:
+                        conf[i] = {}
+                        self._set_default(desc[i], conf[i])
+                    else:
+                        self._set_default(desc[i], conf[i])
 
-            elif i not in conf or conf[i] is None:
-                conf[i] = desc[i]["default"]
+                elif i not in conf or conf[i] is None:
+                    conf[i] = desc[i]["default"]
 
     def load(self, config_file):
         """ Load config from file"""
@@ -118,44 +129,45 @@ class _BaseConfig:
         with open(file, "w+") as f:
             yaml.dump(conf, f, default_flow_style=False)
 
-    def _set_value(self, v, d, *args):
+    def _set_value(self, v, desc, d, *args):
         if len(args) > 1:
             if args[0] not in d:
                 d[args[0]] = {}
-            return self._set_value(v, d[args[0]], *args[1:])
+            return self._set_value(v, desc[args[0]], d[args[0]], *args[1:])
         else:
-            if args[0] in d:
-                t_d = type(d[args[0]])
-                t_v = type(v)
-                if t_d != t_v:
-                    raise TypeError("Type mismatch: Given {} != Expected {}".format(t_v, t_d))
-
-            d[args[0]] = v
+            if args[0] in d and "type" in desc[args[0]]:
+                t = desc[args[0]]["type"]
+                d[args[0]] = _Value(v).as_(t)
+            else:
+                d[args[0]] = v
 
     def set_value(self, v, *args):
         """ Set a new value (v) to the given option """
-        self._set_value(v, self._conf, *args)
+        self._set_value(v, self._conf_desc, self._conf, *args)
 
     # TODO: Check if there are multiple end-keys
-    def _get_value(self, d, *args):
+    def _get_value(self, desc, d, *args):
         if type(d) != dict:
             return None
 
         if args[0] not in d:
-            for i in d.values():
-                value = self._get_value(i, *args)
+            for i in d.keys():
+                value = self._get_value(desc[i], d[i], *args)
                 if value is not None:
                     return value
         else:
             if len(args) > 1:
-                return self._get_value(d[args[0]], *args[1:])
+                return self._get_value(desc[args[0]], d[args[0]], *args[1:])
             else:
-                return d[args[0]]
+                if "type" in desc[args[0]]:
+                    return _Value(d[args[0]]).as_(desc[args[0]]["type"])
+                else:
+                    return d[args[0]]
 
     def get_value(self, *args):
         """ Return the requested value """
 
-        v = self._get_value(self._conf, *args)
+        v = self._get_value(self._conf_desc, self._conf, *args)
         if v is None:
             raise KeyError("Key not found")
         else:
@@ -179,16 +191,16 @@ class BaseOptions:
         """ Save current config """
         self.config.dump()
 
-    def get(self, *args) -> _Value:
+    def get(self, *args):
         """ Return the requested value."""
         try:
             arg = self._args.get_value(*args)
             if args not in self._modified_options and arg is not None:
-                return _Value(arg)
+                return arg
         except AttributeError:
             pass
 
-        return _Value(self.config.get_value(*args))
+        return self.config.get_value(*args)
 
     def set(self, v, *args):
         """ Set a new value (v) to the given option """
