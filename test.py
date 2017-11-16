@@ -11,8 +11,8 @@ d = [
 ]
 
 o = option_parse.BaseOptions("/tmp/test.yml", d)
-print(o.get_or_set("Default",  "test2", "test"))
-#o["test2"]["test"] = "UpdateValue"
-print(o["test2"])
-print(o["no_test2"])
+print(o.get_or_set("Default",  "test2", "test", "test3").as_(str))
+print("A=",o["test2"]["test"]["test3"])
+o["test2"]["test"]["test3"] = "A"
+print(o.get_value("test3").as_(str))
 o.save_config()
