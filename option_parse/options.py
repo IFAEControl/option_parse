@@ -130,39 +130,53 @@ class _BaseConfig:
             yaml.dump(conf, f, default_flow_style=False)
 
     def _set_value(self, v, desc, d, *args):
+        arg = args[0]
+
         if len(args) > 1:
-            if args[0] not in d:
-                d[args[0]] = {}
-            return self._set_value(v, desc[args[0]], d[args[0]], *args[1:])
+            if arg not in d:
+                d[arg] = {}
+            return self._set_value(v, desc[arg], d[arg], *args[1:])
         else:
-            if args[0] in d and "type" in desc[args[0]]:
-                t = desc[args[0]]["type"]
-                d[args[0]] = _Value(v).as_(t)
+            if arg in d and "type" in desc[arg]:
+                t = desc[arg]["type"]
+                d[arg] = _Value(v).as_(t)
             else:
-                d[args[0]] = v
+                d[arg] = v
 
     def set_value(self, v, *args):
         """ Set a new value (v) to the given option """
         self._set_value(v, self._conf_desc, self._conf, *args)
+
+    def _count_end_key(self, key, d, counter):
+        for k in d.keys():
+            if k == key:
+                counter += 1
+            elif k == type(dict):
+                counter += self._count_end_key(key, d[k], counter+1)
+
+        return counter
+
 
     # TODO: Check if there are multiple end-keys
     def _get_value(self, desc, d, *args):
         if type(d) != dict:
             return None
 
-        if args[0] not in d:
+        arg = args[0]
+
+        if arg not in d:
             for i in d.keys():
                 value = self._get_value(desc[i], d[i], *args)
                 if value is not None:
                     return value
         else:
             if len(args) > 1:
-                return self._get_value(desc[args[0]], d[args[0]], *args[1:])
+                return self._get_value(desc[arg], d[arg], *args[1:])
             else:
-                if "type" in desc[args[0]]:
-                    return _Value(d[args[0]]).as_(desc[args[0]]["type"])
+                if "type" in desc[arg]:
+                    return _Value(d[arg]).as_(desc[arg]["type"])
                 else:
-                    return d[args[0]]
+                    return d[arg]
 
     def get_value(self, *args):
         """ Return the requested value """
