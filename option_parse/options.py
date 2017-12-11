@@ -1,4 +1,5 @@
 import argparse
+from os import path
 from pydoc import locate
 
 import yaml
@@ -90,12 +91,20 @@ class _BaseArgs:
 
 
 class _BaseConfig:
-    def __init__(self, conf_desc: dict, config_file: str=None) -> None:
+    def __init__(self, conf_desc: dict, config_file: str=None, create=True) -> None:
         self._conf_desc = conf_desc
         self._config_file = None
         self._conf = None
+
+        exist = path.exists(config_file)
+        if not exist:
+            open(config_file, "w+")
+
         if config_file is not None:
             self.load(config_file)
+
+        if not exist:
+            self.dump()
 
     def _set_default(self, desc, conf):
         for i in desc.keys():
