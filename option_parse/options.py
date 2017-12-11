@@ -43,7 +43,7 @@ class _Value:
 
 
 class _BaseArgs:
-    def __init__(self, args_desc: dict) -> None:
+    def __init__(self, args_desc: list) -> None:
         if args_desc is None:
             return
         self._parser = argparse.ArgumentParser()
@@ -203,7 +203,7 @@ class BaseOptions:
         command line arguments with a fallback to the configuration file.
     """
 
-    def __init__(self, config_file: str, conf_desc: dict, args_desc: dict) -> None:
+    def __init__(self, config_file: str, conf_desc: dict, args_desc: list) -> None:
         self.config = _BaseConfig(conf_desc, config_file)
         self._args = _BaseArgs(args_desc)
 
