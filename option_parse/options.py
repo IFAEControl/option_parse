@@ -177,6 +177,12 @@ class _BaseConfig:
 
         if arg not in d:
             for i in d.keys():
+
+                # Avoid errors when the provided conf_desc is 
+                # incorrect or incompleted
+                if i not in desc:
+                    continue
+
                 value = self._get_value(desc[i], d[i], *args)
                 if value is not None:
                     return value
