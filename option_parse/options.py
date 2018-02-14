@@ -99,7 +99,7 @@ class _BaseConfig:
         self._conf = None
 
         exist = path.exists(config_file)
-        if not exist:
+        if not exist and create is True:
             open(config_file, "w+")
 
         if config_file is not None:
@@ -252,9 +252,17 @@ class AppOptions:
         Because configuration files can be system-wide (/etc) or local (~/.config) it will
         find if the configuration file exist in one of those paths. Local configuartion have
         more priority. It will also handle command line arguments which have maximum priority. 
+
+        By default the save/restore methods only operates for the local configuration file (ie:
+        when executing save_config will only save the changes to the local config) 
     """
 
-    def __init__(self, app_name, config_name: str, conf_desc: dict, args_desc: list) -> None:
+    def __init__(self, app_name, config_name: str, conf_desc: dict, args_desc: list, both=False) -> None:
+        """
+        Args:
+            both: If true, when executing save_config will also write the configuration to the 
+                  system-wide config file.
+        """
 
         app_dirs = AppDirs(app_name)
         local_cfg_path = app_dirs.user_config_dir
@@ -265,8 +273,10 @@ class AppOptions:
         os.makedirs(system_cfg_path, exist_ok=True)
         system_cfg_file = "{}/{}.yaml".format(system_cfg_path, config_name)
 
+        self._write_etc = both
+
         self._local_cfg = _BaseConfig(conf_desc, local_config_file)
-        self._system_cfg = _BaseConfig(conf_desc, system_cfg_file)
+        self._system_cfg = _BaseConfig(conf_desc, system_cfg_file, create=both)
         self._args = _BaseArgs(args_desc)
 
         # Modified options will be checked only against config values, not arguments
@@ -275,7 +285,9 @@ class AppOptions:
     def save_config(self) -> None:
         """ Save current config """
         self._local_cfg.dump()
-        self._system_cfg.dump()
+
+        if self._write_etc:
+            self._system_cfg.dump()
 
     def get(self, *args):
         """ Return the requested value."""
