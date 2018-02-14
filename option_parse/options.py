@@ -300,12 +300,18 @@ class AppOptions:
 
         try:
             return self._local_cfg.get_value(*args)
-        except AttributeError: 
+        except (AttributeError, KeyError): 
             pass
 
-        # If we reach the option we are searching is not in the arguments nor in
-        # the local configurations, so we finally check the system-wide config.
-        return self._system_cfg.get_value(*args)
+        try:
+            # If we reach the option we are searching is not in the arguments nor in
+            # the local configurations, so we finally check the system-wide config.
+            return self._system_cfg.get_value(*args)
+        except KeyError:
+            # If we are asked for an argument that is not pressent, 
+            # return None instead of throwing a KeyError exception
+            if self._args.get_value(*args) is None:
+                return None
 
     def set(self, v, *args):
         """ Set a new value (v) to the given option """
