@@ -1,6 +1,12 @@
-import option_parse
+from option_parse import AppOptions
 
-d = [
+conf_desc = {
+    "a": {
+        "b": {"default": 100},
+    },
+}
+
+args = [
     {
         "name": {"-t", "--test"},
     },
@@ -10,9 +16,12 @@ d = [
     },
 ]
 
-o = option_parse.BaseOptions("/tmp/test.yml", d)
-print(o.get_or_set("Default",  "test2", "test", "test3").as_(str))
-print("A=",o["test2"]["test"]["test3"])
-o["test2"]["test"]["test3"] = "A"
-print(o.get_value("test3").as_(str))
-o.save_config()
+
+opt = AppOptions("option_parse", "test", conf_desc, args)
+
+print(opt["test2"])
+print(opt["test"])
+print(opt["b"])
+opt["a"]["b"] = 101
+print(opt["b"])
+opt.save_config()
