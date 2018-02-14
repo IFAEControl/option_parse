@@ -254,13 +254,13 @@ class AppOptions:
         more priority. It will also handle command line arguments which have maximum priority. 
 
         By default the save/restore methods only operates for the local configuration file (ie:
-        when executing save_config will only save the changes to the local config) 
+        when executing save_config will only save the changes to the local config file) 
     """
 
     def __init__(self, app_name, config_name: str, conf_desc: dict, args_desc: list, both=False) -> None:
         """
         Args:
-            both: If true, when executing save_config will also write the configuration to the 
+            both: If true, save_config method will also write the updated config to the 
                   system-wide config file.
         """
 
@@ -304,7 +304,7 @@ class AppOptions:
             pass
 
         try:
-            # If we reach the option we are searching is not in the arguments nor in
+            # If we reach here the option we are searching is not in the arguments nor in
             # the local configurations, so we finally check the system-wide config.
             return self._system_cfg.get_value(*args)
         except KeyError:
