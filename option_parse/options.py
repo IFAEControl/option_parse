@@ -1,8 +1,10 @@
 import argparse
+import os
 from os import path
 from pydoc import locate
 
 import yaml
+from appdirs import AppDirs
 
 
 class _Unsigned:
@@ -208,7 +210,7 @@ class BaseOptions:
         self._args = _BaseArgs(args_desc)
 
         # Modified options will be checked only against config values, not arguments
-        self._modified_options: list = []
+        self._modified_options = []
 
     def save_config(self) -> None:
         """ Save current config """
@@ -230,7 +232,70 @@ class BaseOptions:
         self.config.set_value(v, *args)
         self._modified_options.append(args)
 
-    # FIXME: Return a recursable
+    def __getitem__(self, key: str):
+        return self.get(key)
+
+    def __setitem__(self, key: str, value):
+        self.set(value, key)
+
+
+class AppOptions:
+    """
+        We create a folder for each application which may contain multiple yaml files
+        for more concrete configurations for different parts of that application. 
+        Because configuration files can be system-wide (/etc) or local (~/.config) it will
+        find if the configuration file exist in one of those paths. Local configuartion have
+        more priority. It will also handle command line arguments which have maximum priority. 
+    """
+
+    def __init__(self, app_name, config_name: str, conf_desc: dict, args_desc: list) -> None:
+
+        app_dirs = AppDirs(app_name)
+        local_cfg_path = app_dirs.user_config_dir
+        os.makedirs(local_cfg_path, exist_ok=True)
+        local_config_file = "{}/{}.yaml".format(local_cfg_path, config_name)
+
+        system_cfg_path = "/etc/{}".format(app_name)
+        os.makedirs(system_cfg_path, exist_ok=True)
+        system_cfg_file = "{}/{}.yaml".format(system_cfg_path, config_name)
+
+        self._local_cfg = _BaseConfig(conf_desc, local_config_file)
+        self._system_cfg = _BaseConfig(conf_desc, system_cfg_file)
+        self._args = _BaseArgs(args_desc)
+
+        # Modified options will be checked only against config values, not arguments
+        self._modified_options = []
+
+    def save_config(self) -> None:
+        """ Save current config """
+        self._local_cfg.dump()
+        self._system_cfg.dump()
+
+    def get(self, *args):
+        """ Return the requested value."""
+        try:
+            arg = self._args.get_value(*args)
+            if args not in self._modified_options and arg is not None:
+                return arg
+        except AttributeError:
+            pass
+
+        try:
+            return self._local_cfg.get_value(*args)
+        except AttributeError: 
+            pass
+
+        # If we reach the option we are searching is not in the arguments nor in
+        # the local configurations, so we finally check the system-wide config.
+        return self._system_cfg.get_value(*args)
+
+    def set(self, v, *args):
+        """ Set a new value (v) to the given option """
+        #FIXME: Check why system_cfg don't shows the updated value
+        self._local_cfg.set_value(v, *args)
+        self._system_cfg.set_value(v, *args)
+        self._modified_options.append(args)
+
     def __getitem__(self, key: str):
         return self.get(key)
 

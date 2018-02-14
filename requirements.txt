@@ -1,1 +1,2 @@
 PyYAML==3.12
+appdirs==1.4.3
