@@ -105,7 +105,7 @@ class _BaseConfig:
         if config_file is not None:
             self.load(config_file)
 
-        if not exist:
+        if not exist and create is True:
             self.dump()
 
     def _set_default(self, desc, conf):
@@ -270,13 +270,19 @@ class AppOptions:
         local_config_file = "{}/{}.yaml".format(local_cfg_path, config_name)
 
         system_cfg_path = "/etc/{}".format(app_name)
-        os.makedirs(system_cfg_path, exist_ok=True)
+        if both:
+            os.makedirs(system_cfg_path, exist_ok=True)
         system_cfg_file = "{}/{}.yaml".format(system_cfg_path, config_name)
 
         self._write_etc = both
 
         self._local_cfg = _BaseConfig(conf_desc, local_config_file)
-        self._system_cfg = _BaseConfig(conf_desc, system_cfg_file, create=both)
+
+        try:
+            self._system_cfg = _BaseConfig(conf_desc, system_cfg_file, create=both)
+        except FileNotFoundError:
+            pass
+
         self._args = _BaseArgs(args_desc)
 
         # Modified options will be checked only against config values, not arguments
