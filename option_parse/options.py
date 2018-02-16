@@ -281,7 +281,7 @@ class AppOptions:
         try:
             self._system_cfg = _BaseConfig(conf_desc, system_cfg_file, create=both)
         except FileNotFoundError:
-            pass
+            self._system_cfg = None
 
         self._args = _BaseArgs(args_desc)
 
@@ -312,7 +312,8 @@ class AppOptions:
         try:
             # If we reach here the option we are searching is not in the arguments nor in
             # the local configurations, so we finally check the system-wide config.
-            return self._system_cfg.get_value(*args)
+            if self._system_cfg:
+                return self._system_cfg.get_value(*args)
         except KeyError:
             # If we are asked for an argument that is not pressent, 
             # return None instead of throwing a KeyError exception
