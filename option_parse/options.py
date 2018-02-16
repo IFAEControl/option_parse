@@ -323,7 +323,8 @@ class AppOptions:
         """ Set a new value (v) to the given option """
         #FIXME: Check why system_cfg don't shows the updated value
         self._local_cfg.set_value(v, *args)
-        self._system_cfg.set_value(v, *args)
+        if self._system_cfg:
+            self._system_cfg.set_value(v, *args)
         self._modified_options.append(args)
 
     def __getitem__(self, key: str):
