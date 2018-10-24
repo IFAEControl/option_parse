@@ -100,7 +100,8 @@ class _BaseConfig:
 
         exist = path.exists(config_file)
         if not exist and create is True:
-            open(config_file, "w+")
+            with open(config_file, "w+"):
+                pass
 
         if config_file is not None:
             self.load(config_file)
